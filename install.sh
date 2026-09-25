@@ -137,13 +137,82 @@ make_staged_link() {
     [[ -L "$staged_link" && -e "$staged_link" ]]
 }
 
+transaction_active=false
+transaction_source=""
+transaction_target=""
+transaction_staged=""
+transaction_original=""
+
+begin_transaction() {
+    transaction_source="$1"
+    transaction_target="$2"
+    transaction_staged="$3"
+    transaction_original="${4:-}"
+    transaction_active=true
+}
+
+finish_transaction() {
+    transaction_active=false
+    transaction_source=""
+    transaction_target=""
+    transaction_staged=""
+    transaction_original=""
+}
+
+rollback_active_transaction() {
+    local target_is_ours=false
+
+    [[ "$transaction_active" == true ]] || return
+
+    if [[ -L "$transaction_target" ]] &&
+       [[ "$(readlink -f -- "$transaction_target")" == "$(readlink -f -- "$transaction_source")" ]]; then
+        target_is_ours=true
+        rm -f -- "$transaction_target"
+    fi
+
+    rm -f -- "$transaction_staged"
+
+    if [[ -n "$transaction_original" ]] &&
+       [[ -e "$transaction_original" || -L "$transaction_original" ]]; then
+        if [[ ! -e "$transaction_target" && ! -L "$transaction_target" ]]; then
+            mv -- "$transaction_original" "$transaction_target"
+            echo "Restored after interruption: $transaction_target" >&2
+        else
+            echo "WARN: could not restore $transaction_target automatically" >&2
+            echo "Original remains at: $transaction_original" >&2
+        fi
+    elif [[ "$target_is_ours" == true ]]; then
+        echo "Removed incomplete link after interruption: $transaction_target" >&2
+    fi
+
+    finish_transaction
+}
+
+handle_signal() {
+    local exit_code="$1"
+    local signal_name="$2"
+
+    trap - HUP INT TERM
+    set +e
+    echo >&2
+    echo "Interrupted by $signal_name; rolling back the active target." >&2
+    rollback_active_transaction
+    exit "$exit_code"
+}
+
+trap 'handle_signal 129 HUP' HUP
+trap 'handle_signal 130 INT' INT
+trap 'handle_signal 143 TERM' TERM
+
 install_new_link() {
     local source_path="$1"
     local target_path="$2"
     local staged_link="$3"
 
+    begin_transaction "$source_path" "$target_path" "$staged_link"
     make_staged_link "$source_path" "$staged_link"
     mv -- "$staged_link" "$target_path"
+    finish_transaction
 }
 
 echo "Repository: $repo_dir"
@@ -211,15 +280,18 @@ for package in "${packages[@]}"; do
                 continue
             fi
 
+            begin_transaction "$source_path" "$target_path" "$staged_link" "$displaced_path"
             make_staged_link "$source_path" "$staged_link"
             rm -rf -- "$displaced_path"
             mv -- "$target_path" "$displaced_path"
             if mv -- "$staged_link" "$target_path"; then
+                finish_transaction
                 rm -rf -- "$displaced_path"
                 echo "Replaced: $target_path"
             else
                 mv -- "$displaced_path" "$target_path"
                 rm -f -- "$staged_link"
+                finish_transaction
                 echo "ERROR: replacement failed; original restored: $target_path" >&2
                 exit 1
             fi
@@ -235,13 +307,16 @@ for package in "${packages[@]}"; do
                 mkdir -p -- "$backup_dir"
             fi
 
+            begin_transaction "$source_path" "$target_path" "$staged_link" "$backup_dir/$package"
             make_staged_link "$source_path" "$staged_link"
             mv -- "$target_path" "$backup_dir/$package"
             if mv -- "$staged_link" "$target_path"; then
+                finish_transaction
                 echo "Backed up and linked: $target_path"
             else
                 mv -- "$backup_dir/$package" "$target_path"
                 rm -f -- "$staged_link"
+                finish_transaction
                 echo "ERROR: replacement failed; backup restored: $target_path" >&2
                 exit 1
             fi
@@ -282,15 +357,18 @@ else
             if [[ "$dry_run" == true ]]; then
                 echo "WOULD REPLACE: $zshrc_target"
             else
+                begin_transaction "$zshrc_source" "$zshrc_target" "$staged_link" "$displaced_path"
                 make_staged_link "$zshrc_source" "$staged_link"
                 rm -rf -- "$displaced_path"
                 mv -- "$zshrc_target" "$displaced_path"
                 if mv -- "$staged_link" "$zshrc_target"; then
+                    finish_transaction
                     rm -rf -- "$displaced_path"
                     echo "Replaced: $zshrc_target"
                 else
                     mv -- "$displaced_path" "$zshrc_target"
                     rm -f -- "$staged_link"
+                    finish_transaction
                     echo "ERROR: replacement failed; original restored: $zshrc_target" >&2
                     exit 1
                 fi
@@ -304,13 +382,16 @@ else
                     backup_dir="${XDG_STATE_HOME:-$HOME/.local/state}/my-dotfiles/backups/$(date +%Y%m%d-%H%M%S)-$$"
                     mkdir -p -- "$backup_dir"
                 fi
+                begin_transaction "$zshrc_source" "$zshrc_target" "$staged_link" "$backup_dir/zshrc"
                 make_staged_link "$zshrc_source" "$staged_link"
                 mv -- "$zshrc_target" "$backup_dir/zshrc"
                 if mv -- "$staged_link" "$zshrc_target"; then
+                    finish_transaction
                     echo "Backed up and linked: $zshrc_target"
                 else
                     mv -- "$backup_dir/zshrc" "$zshrc_target"
                     rm -f -- "$staged_link"
+                    finish_transaction
                     echo "ERROR: replacement failed; backup restored: $zshrc_target" >&2
                     exit 1
                 fi

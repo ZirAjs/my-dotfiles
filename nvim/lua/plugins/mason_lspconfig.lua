@@ -10,6 +10,7 @@ return {
       ensure_installed = {
         "lua_ls",
         "pyright",
+        "ruff",
         "clangd",
         "rust_analyzer",
         "ts_ls",

@@ -74,11 +74,17 @@ Configured servers:
 
 - `lua_ls`
 - `pyright`
+- `ruff`
 - `clangd`
 - `rust_analyzer`
 - `ts_ls`
 - `texlab`
 - `marksman`
+
+Mason installs these editor-specific language servers, including Ruff. The
+apt/pacman setup script installs Neovim's foundational system dependencies but
+does not install Ruff. Ruff provides Python linting and formatting, while
+Pyright remains responsible for type checking, completion, and navigation.
 
 `clangd` is configured with background indexing, clang-tidy, detailed completion, and include-what-you-use header insertion.
 
