@@ -1,0 +1,4 @@
+[[mgr.prepend_keymap]]
+on = [ "T" ]
+run = 'shell "alacritty" --orphan'
+desc = "Open terminal here"

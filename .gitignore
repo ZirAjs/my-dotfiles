@@ -1,0 +1,13 @@
+# Local editor and agent state
+**/.agents/
+**/.codex/
+**/*.log
+**/*.bak
+**/*.bak.*
+
+# Third-party packages are restored by their package managers
+tmux/plugins/
+
+# Machine-local overlays generated or maintained outside this repository
+alacritty/themes/noctalia.toml
+zsh/local.zsh

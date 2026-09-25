@@ -1,0 +1,19 @@
+# Plugin inventory
+#
+# Keep one plugin per line. Short notes explain why the plugin exists.
+
+saghen/blink.cmp                 completion
+ibhagwan/fzf-lua                 fuzzy finder
+folke/which-key.nvim             keymap hints
+chentoast/marks.nvim             visible and navigable marks
+mason-org/mason.nvim             language server installer
+mason-org/mason-lspconfig.nvim   Mason language server list
+neovim/nvim-lspconfig            LSP server definitions
+stevearc/oil.nvim                file explorer
+nvim-treesitter/nvim-treesitter  Treesitter parsers and queries
+lewis6991/gitsigns.nvim          Git signs and hunk actions
+nvim-lualine/lualine.nvim        statusline
+folke/tokyonight.nvim            colorscheme
+folke/trouble.nvim               diagnostics and list UI
+nvim-mini/mini.pairs             automatic pairs
+nvim-mini/mini.surround          surround editing

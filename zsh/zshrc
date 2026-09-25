@@ -1,0 +1,198 @@
+zsh_config_dir="$HOME/.config/zsh"
+
+source "$zsh_config_dir/env.zsh"
+source "$zsh_config_dir/programs.zsh"
+
+if [[ -r "$zsh_config_dir/local.zsh" ]]; then
+  source "$zsh_config_dir/local.zsh"
+fi
+
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+
+setopt APPEND_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt INTERACTIVE_COMMENTS
+
+# Better directory behavior
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+
+# Change directory by typing the name of the directory without cd
+setopt AUTO_CD
+
+# Emacs key bindings
+bindkey -e
+
+# Treat common separators as word boundaries for word movement/deletion.
+WORDCHARS='*_[]~!$%^(){}<>'
+
+bindkey "\e[1;5D" backward-word
+bindkey "\e[1;5C" forward-word
+
+# Keep history suggestions subdued but readable against the Noctalia terminal
+# background. The default fg=8 maps to a nearly invisible dark blue.
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#7777ad'
+
+autoload -Uz compinit
+compinit
+
+# Persist the directory stack like Oh My Zsh's dirpersist plugin.  A new shell
+# restores the saved stack; each directory change writes its current stack.
+# Zsh uses DIRSTACKSIZE to keep automatic stack updates bounded.
+DIRSTACKSIZE=${DIRSTACKSIZE:-20}
+dirstack_file=${dirstack_file:-${HOME}/.zdirs}
+
+if [[ -f $dirstack_file ]] && [[ ${#dirstack[*]} -eq 0 ]]; then
+  dirstack=("${(@f)$(<$dirstack_file)}")
+
+  # Establish OLDPWD without leaving the shell in the first saved directory.
+  [[ -d ${dirstack[1]} ]] && builtin cd -- "${dirstack[1]}" && builtin cd -- "$OLDPWD"
+fi
+
+autoload -Uz add-zsh-hook
+chpwd_dirpersist() {
+  (( DIRSTACKSIZE > 0 )) && [[ -n $dirstack_file ]] || return
+
+  local -a my_stack
+  my_stack=("$PWD" "${dirstack[@]}")
+  builtin print -rl -- "${(@u)my_stack}" >| "$dirstack_file"
+}
+add-zsh-hook chpwd chpwd_dirpersist
+
+# Shift+Enter inserts newline
+insert-line-break() {
+  LBUFFER+=$'\n'
+}
+zle -N insert-line-break
+bindkey "\e[13;2u" insert-line-break
+bindkey "\e\r" insert-line-break
+bindkey "\e\n" insert-line-break
+
+# exact-case first, then case-insensitive
+zstyle ':completion:*' matcher-list "" 'm:{a-zA-Z}={A-Za-z}'
+
+# 1,2,3 ... 9 shortcuts to jump to directories in the directory stack
+for n in {1..9}; do
+  alias "$n=cd +$n"
+done
+unset n
+
+# Lightweight Powerlevel10k-style prompt using the Noctalia palette.
+autoload -Uz add-zsh-hook
+setopt PROMPT_SUBST
+
+_prompt_git_status() {
+  local git_output line branch merge_head rebase_merge rebase_apply git_state
+  local -i untracked=0 modified=0 staged=0 conflicted=0 stash_count=0 ahead=0 behind=0
+
+  git_output=$(command git status --porcelain=v1 --branch 2>/dev/null) || {
+    GIT_PROMPT=''
+    return
+  }
+
+  branch=$(command git symbolic-ref --quiet --short HEAD 2>/dev/null) ||
+    branch=$(command git rev-parse --short HEAD 2>/dev/null)
+  branch=${branch//\%/%%}
+
+  while IFS= read -r line; do
+    [[ $line == '## '* ]] && continue
+
+    if [[ $line == '?? '* ]]; then
+      (( untracked++ ))
+      continue
+    fi
+
+    if [[ ${line[1,2]} == (DD|AU|UD|UA|DU|AA|UU) ]]; then
+      (( conflicted++ ))
+      continue
+    fi
+
+    [[ $line[1] != ' ' && $line[1] != '?' ]] && (( staged++ ))
+    [[ $line[2] != ' ' ]] && (( modified++ ))
+  done <<< "$git_output"
+
+  merge_head=$(command git rev-parse --git-path MERGE_HEAD 2>/dev/null)
+  rebase_merge=$(command git rev-parse --git-path rebase-merge 2>/dev/null)
+  rebase_apply=$(command git rev-parse --git-path rebase-apply 2>/dev/null)
+  if [[ -n $merge_head && -f $merge_head ]]; then
+    git_state='merge'
+  elif [[ -n $rebase_merge && -d $rebase_merge ]] || [[ -n $rebase_apply && -d $rebase_apply ]]; then
+    git_state='rebase'
+  fi
+
+  stash_count=$(command git stash list 2>/dev/null | command wc -l | command tr -d ' ') || stash_count=0
+  ahead=$(command git rev-list --count '@{upstream}..HEAD' 2>/dev/null) || ahead=0
+  behind=$(command git rev-list --count 'HEAD..@{upstream}' 2>/dev/null) || behind=0
+
+  GIT_PROMPT=" %F{#fd4663} ${branch}%f"
+  [[ -n $git_state ]]    && GIT_PROMPT+=" %F{#ff9f43}${git_state}%f"
+  (( conflicted > 0 ))   && GIT_PROMPT+=" %F{#ff9f43}✖${conflicted}%f"
+  (( staged > 0 ))    && GIT_PROMPT+=" %F{#9bfece}+${staged}%f"
+  (( modified > 0 ))  && GIT_PROMPT+=" %F{#fff59b}!${modified}%f"
+  (( untracked > 0 )) && GIT_PROMPT+=" %F{#fd4663}?${untracked}%f"
+  (( stash_count > 0 )) && GIT_PROMPT+=" %F{#a9aefe}*${stash_count}%f"
+  (( ahead > 0 ))     && GIT_PROMPT+=" %F{#9bfece}⇡${ahead}%f"
+  (( behind > 0 ))    && GIT_PROMPT+=" %F{#a9aefe}⇣${behind}%f"
+}
+
+_prompt_mamba_env() {
+  local env_name
+
+  if [[ -n ${CONDA_DEFAULT_ENV:-} ]]; then
+    env_name=${CONDA_DEFAULT_ENV:t}
+    env_name=${env_name//\%/%%}
+    MAMBA_PROMPT=" %F{#a9aefe} ${env_name}%f"
+  else
+    MAMBA_PROMPT=''
+  fi
+}
+
+_prompt_precmd() {
+  local exit_code=$?
+
+  # Some full-screen/serial programs can leave DECAWM disabled, which breaks
+  # ZLE redraw for long input. Re-enable autowrap before drawing the prompt.
+  print -n -- $'\e[?7h'
+
+  _prompt_git_status
+  _prompt_mamba_env
+
+  if (( exit_code == 0 )); then
+    PROMPT_SYMBOL='%F{green}❯%f'
+  else
+    PROMPT_SYMBOL="%F{red}❯%f %F{red}${exit_code}%f"
+  fi
+}
+add-zsh-hook precmd _prompt_precmd
+
+PROMPT='%F{blue}╭─%f %K{#2b3145}%F{#a9aefe} %D{%H:%M} %k%f %F{cyan}%n%f%F{blue}@%f%F{cyan}%m%f %F{blue}in%f %B%F{yellow}%~%f%b${MAMBA_PROMPT}${GIT_PROMPT}
+%F{blue}╰─%f ${PROMPT_SYMBOL} '
+
+# zsh-syntax-highlighting expects to be loaded after widgets and completion.
+# Keep these last so they wrap zle's final widget table.
+for plugin_file in \
+  /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
+  /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+do
+  if [[ -r $plugin_file ]]; then
+    source "$plugin_file"
+    break
+  fi
+done
+
+for plugin_file in \
+  /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+  /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+do
+  if [[ -r $plugin_file ]]; then
+    source "$plugin_file"
+    break
+  fi
+done
+unset plugin_file
