@@ -7,14 +7,24 @@ config_dir="$HOME/.config"
 default_action="prompt"
 action_flag_seen=false
 dry_run=false
+gui_mode="auto"
 
 usage() {
-    echo "Usage: $0 [--dry-run] [--overwrite|--backup|--skip]"
+    echo "Usage: $0 [--dry-run] [--overwrite|--backup|--skip] [--gui|--no-gui]"
+    echo "Link configuration files only; install applications separately."
+    echo "  --gui / --no-gui  Include / skip Alacritty, Kitty, and Zathura configs."
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run)  dry_run=true ;;
+        --gui|--no-gui)
+            if [[ "$gui_mode" != "auto" ]]; then
+                echo "ERROR: choose only one of --gui or --no-gui" >&2
+                exit 2
+            fi
+            gui_mode="${1#--}"
+            ;;
         --overwrite|--backup|--skip)
             if [[ "$action_flag_seen" == true ]]; then
                 echo "ERROR: choose only one of --overwrite, --backup, or --skip" >&2
@@ -31,15 +41,46 @@ while [[ $# -gt 0 ]]; do
 done
 
 packages=(
-    alacritty
     btop
-    kitty
     nvim
     tmux
     yazi
-    zathura
     zsh
 )
+
+if [[ "$gui_mode" == "auto" ]]; then
+    gui_mode="no-gui"
+    gui_prompt='y/N'
+    if [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+        gui_mode="gui"
+        gui_prompt='Y/n'
+        echo "Graphical session detected."
+    else
+        echo "No graphical session detected; defaulting to terminal configs only."
+    fi
+
+    if [[ -t 0 && "$dry_run" != true ]]; then
+        while true; do
+            printf 'Link GUI configs (Alacritty, Kitty, Zathura)? [%s] ' "$gui_prompt"
+            if ! read -r gui_answer; then
+                break
+            fi
+            case "$gui_answer" in
+                y|Y|yes|YES) gui_mode="gui"; break ;;
+                n|N|no|NO) gui_mode="no-gui"; break ;;
+                '') break ;;
+                *) echo "Enter y or n." ;;
+            esac
+        done
+    fi
+fi
+
+if [[ "$gui_mode" == "gui" ]]; then
+    packages+=(alacritty kitty zathura)
+    echo "GUI configs: included"
+else
+    echo "GUI configs: skipped"
+fi
 
 show_depth_one() {
     local path="$1"

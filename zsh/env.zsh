@@ -12,10 +12,6 @@ if command -v ruby >/dev/null 2>&1; then
     export PATH="$RUBY_GEM_BIN:$PATH"
 fi
 
-# Programs that are added to ~/.local/bin
-[[ -d "$HOME/.local/bin" ]] \
-    && export PATH="$HOME/.local/bin:$PATH"
-
 # Programs installed via Coursier (Scala)
 [[ -d "$HOME/.local/share/coursier/bin" ]] \
     && export PATH="$HOME/.local/share/coursier/bin:$PATH"
@@ -24,5 +20,10 @@ fi
 # Note that most of the cargo binaries should be installed via pacman
 [[ -d "$HOME/.cargo/bin" ]] \
     && export PATH="$HOME/.cargo/bin:$PATH"
+
+# Prefer user-installed commands, even if the directory is created later.
+typeset -U path PATH
+path=("$HOME/.local/bin" "${path[@]}")
+export PATH
 
 return 0

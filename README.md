@@ -7,15 +7,33 @@ Niri, systemd, and Noctalia configuration are intentionally not installed.
 `snippets/niri-user.kdl` preserves only the changes made to Niri's packaged
 default as a reference.
 
-## Install
+## Link configs
 
-Preview a non-interactive installation first:
+`install.sh` only links configuration files. Install applications, fonts, and
+plugins separately. It does not install packages or change your login shell.
+
+Preview the changes first:
 
     ./install.sh --dry-run --backup
 
 Run interactively:
 
     ./install.sh
+
+Interactive setup asks whether to link GUI tool configurations
+(Alacritty, Kitty, and Zathura). A `DISPLAY` or `WAYLAND_DISPLAY` environment
+variable defaults the answer to yes; otherwise it defaults to no for server
+sessions. This detects the current session, so a desktop accessed through SSH
+may default to no. You can always choose either answer.
+
+For unattended installs and dry runs, the detected default is used without
+prompting. Override detection explicitly:
+
+    ./install.sh --no-gui --backup
+    ./install.sh --gui --dry-run --backup
+
+This installer links configurations; it does not install application binaries.
+Skipping GUI configurations leaves any existing GUI configs in place.
 
 When a target already exists, the installer offers:
 
@@ -37,49 +55,14 @@ back into its original location. Configuration directories belong under
 
 ## Requirements
 
-- Bash
-- Git for optional TPM setup
-- JetBrainsMono Nerd Font for terminal text and icon glyphs
+- Bash and standard Linux file utilities to run the linker
+- The applications whose configurations you use
+- JetBrainsMono Nerd Font for the Alacritty configuration and icon glyphs
 
-Install the font on Arch Linux or Ubuntu:
-
-    ./scripts/setup-fonts.sh
-
-The script first checks Fontconfig and asks for consent if the font is missing.
-On Arch it uses `ttf-jetbrains-mono-nerd`. On Ubuntu it installs the required
-download tools through apt, then installs the official Nerd Fonts archive for
-the current user. Force package-manager selection with `--pacman` or `--apt`.
-
-## Tmux plugins
-
-Install TPM after linking the tmux configuration:
-
-    ./scripts/setup-tmux.sh
-
-TPM and downloaded plugins live under tmux/plugins, which is intentionally
-ignored by Git. After starting tmux, press prefix + I to install configured
-plugins, or run:
-
-    ./scripts/setup-tmux.sh --install-plugins
-
-Update TPM explicitly with:
-
-    ./scripts/setup-tmux.sh --update
-
-## Neovim dependencies
-
-Install the system dependencies detected from the Neovim configuration:
-
-    ./scripts/setup-nvim.sh
-
-Force a package manager when automatic detection is not appropriate:
-
-    ./scripts/setup-nvim.sh --apt
-    ./scripts/setup-nvim.sh --pacman
-
-The script lists every package and asks for confirmation before invoking apt,
-pacman, or npm. It validates the required Neovim and Tree-sitter CLI versions.
-It does not start Neovim or synchronize plugins; run :Lazy sync manually.
+See [nvim/README.md](nvim/README.md) for Neovim versions and dependencies.
+Neovim manages its plugins separately; run `:Lazy sync` when needed.
+For tmux plugins, set up TPM separately under `tmux/plugins/tpm`, then press
+prefix + I in tmux. Downloaded tmux plugins are ignored by Git.
 
 ## Zsh
 
@@ -91,12 +74,9 @@ The installer links both the configuration directory and the Zsh entry point:
 Machine-specific shell configuration belongs in zsh/local.zsh. That file is
 ignored by Git; zsh/local.zsh.example is the tracked template.
 
-Install Zsh and its configured plugins on Arch Linux or Ubuntu:
-
-    ./scripts/setup-zsh.sh
-
-The script detects apt or pacman, lists its packages, and asks for confirmation.
-It does not change the login shell; use chsh explicitly if desired.
+Zsh searches `~/.local/bin` before system directories and other configured
+tool directories. Duplicate PATH entries are removed. This priority is applied
+again after startup environment activation and machine-local configuration.
 
 ## Local-only files
 

@@ -7,6 +7,9 @@ if [[ -r "$zsh_config_dir/local.zsh" ]]; then
   source "$zsh_config_dir/local.zsh"
 fi
 
+# Environment activation and local overrides can prepend their own paths.
+path=("$HOME/.local/bin" "${path[@]}")
+
 # History
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=10000
