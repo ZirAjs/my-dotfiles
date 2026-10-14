@@ -26,6 +26,10 @@ setopt AUTO_PUSHD
 setopt PUSHD_IGNORE_DUPS
 setopt PUSHD_SILENT
 
+# Color file listings in terminals, including detailed hidden-file listings.
+alias ls='ls --color=auto'
+alias la='ls -al'
+
 # Change directory by typing the name of the directory without cd
 setopt AUTO_CD
 
