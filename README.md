@@ -60,9 +60,98 @@ back into its original location. Configuration directories belong under
 - JetBrainsMono Nerd Font for the Alacritty configuration and icon glyphs
 
 See [nvim/README.md](nvim/README.md) for Neovim versions and dependencies.
-Neovim manages its plugins separately; run `:Lazy sync` when needed.
-For tmux plugins, set up TPM separately under `tmux/plugins/tpm`, then press
-prefix + I in tmux. Downloaded tmux plugins are ignored by Git.
+
+## Manual user installation
+
+The commands below are optional and run separately from `install.sh`. Skip
+anything already installed. Run them on the machine where you will use the
+tools, including SSH servers. Zsh, tmux, Git, curl, tar, gzip, and a C compiler
+must be available separately; these commands do not install system packages.
+
+For a Bash session, make user-installed commands available immediately:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Neovim
+
+Install the [official Neovim 0.12.6 archive](https://github.com/neovim/neovim/releases/tag/v0.12.6)
+under `~/.local/opt` and expose its command under `~/.local/bin`:
+
+```sh
+curl -fLO https://github.com/neovim/neovim/releases/download/v0.12.6/nvim-linux-x86_64.tar.gz
+mkdir -p ~/.local/opt ~/.local/bin
+tar -C ~/.local/opt -xzf nvim-linux-x86_64.tar.gz
+ln -sfn ~/.local/opt/nvim-linux-x86_64/bin/nvim ~/.local/bin/nvim
+nvim --version
+rm nvim-linux-x86_64.tar.gz
+```
+
+These commands target Linux x86_64. On Linux ARM64, replace
+`nvim-linux-x86_64` with `nvim-linux-arm64` throughout.
+
+After linking this repository's configs, start `nvim`. To install missing
+plugins at the commits recorded in `lazy-lock.json`, run:
+
+```vim
+:lua require("lazy").install({ lockfile = true })
+```
+
+Restart Neovim afterwards. Use `:Lazy restore` to return installed plugins to
+the commits in the lockfile. `:Lazy sync` includes updates, and a plain
+`:Lazy install` can rewrite the lockfile; use the command above to reproduce
+the recorded versions. Only run updates when you intend to review and commit
+the resulting lockfile changes.
+
+### Tree-sitter CLI
+
+Install the [official Tree-sitter CLI](https://github.com/tree-sitter/tree-sitter/releases/latest)
+under `~/.local/bin`:
+
+```sh
+curl -fLO https://github.com/tree-sitter/tree-sitter/releases/latest/download/tree-sitter-linux-x64.gz
+gzip -d tree-sitter-linux-x64.gz
+mkdir -p ~/.local/bin
+install -m 755 tree-sitter-linux-x64 ~/.local/bin/tree-sitter
+tree-sitter --version
+rm tree-sitter-linux-x64
+```
+
+On Linux ARM64, replace `linux-x64` with `linux-arm64`. The Neovim config
+requires Tree-sitter CLI 0.26.1 or newer and a C compiler for parser builds.
+
+### TPM and tmux plugins
+
+After linking the tmux configuration, clone
+[TPM](https://github.com/tmux-plugins/tpm) into the path used by this config:
+
+```sh
+mkdir -p ~/.config/tmux/plugins
+git clone https://github.com/tmux-plugins/tpm.git ~/.config/tmux/plugins/tpm
+```
+
+Skip cloning if TPM is already installed there. Because `~/.config/tmux` is a
+symlink, TPM and downloaded plugins live in this repository's ignored
+`tmux/plugins` directory.
+
+Start tmux:
+
+```sh
+tmux
+```
+
+Inside tmux, load the configuration explicitly if the session was already
+running, or if it still uses the default `Ctrl+b` prefix:
+
+```sh
+tmux source-file ~/.config/tmux/tmux.conf
+tmux show-options -g prefix
+```
+
+The result should be `prefix C-Space`. Press **Ctrl+Space**, release it, then
+press **Shift+i** to install the declared plugins. For intentional plugin
+updates, use **Ctrl+Space**, then **Shift+u**.
 
 ## Zsh
 
@@ -77,6 +166,21 @@ ignored by Git; zsh/local.zsh.example is the tracked template.
 Zsh searches `~/.local/bin` before system directories and other configured
 tool directories. Duplicate PATH entries are removed. This priority is applied
 again after startup environment activation and machine-local configuration.
+
+Zsh loads autosuggestions and syntax highlighting from
+`${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins` first, then falls back to
+system plugin directories. To install these plugins manually for your user:
+
+```sh
+zsh_plugins_dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
+mkdir -p "$zsh_plugins_dir"
+git clone https://github.com/zsh-users/zsh-autosuggestions.git "$zsh_plugins_dir/zsh-autosuggestions"
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$zsh_plugins_dir/zsh-syntax-highlighting"
+exec zsh
+```
+
+Run these commands on each machine where you use the configuration, including
+SSH servers. The linker does not download plugins.
 
 ## Local-only files
 

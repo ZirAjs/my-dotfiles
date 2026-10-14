@@ -183,7 +183,10 @@ PROMPT='%F{blue}╭─%f %K{#2b3145}%F{#a9aefe} %D{%H:%M} %k%f %F{cyan}%n%f%F{bl
 
 # zsh-syntax-highlighting expects to be loaded after widgets and completion.
 # Keep these last so they wrap zle's final widget table.
+zsh_plugins_dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
+
 for plugin_file in \
+  "$zsh_plugins_dir/zsh-autosuggestions/zsh-autosuggestions.zsh" \
   /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
   /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 do
@@ -194,6 +197,7 @@ do
 done
 
 for plugin_file in \
+  "$zsh_plugins_dir/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" \
   /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
   /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 do
@@ -202,4 +206,4 @@ do
     break
   fi
 done
-unset plugin_file
+unset plugin_file zsh_plugins_dir

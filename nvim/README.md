@@ -13,7 +13,7 @@ Personal Neovim configuration focused on a small, explicit Lua setup with lazy-l
 
 ## Install
 
-Place this repository at:
+Link the `nvim` directory from this repository to:
 
 ```sh
 ~/.config/nvim
@@ -25,13 +25,15 @@ Start Neovim:
 nvim
 ```
 
-If plugins are missing, the config prints the install command:
+To install missing plugins at the commits recorded in the active lockfile:
 
 ```vim
-:Lazy sync
+:lua require("lazy").install({ lockfile = true })
 ```
 
-Restart Neovim after the sync completes.
+Restart Neovim after installation completes. Use `:Lazy restore` to return
+installed plugins to the recorded commits. `:Lazy sync` includes updates;
+plain `:Lazy install` can also change the lockfile.
 
 ## Layout
 

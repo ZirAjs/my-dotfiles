@@ -53,7 +53,7 @@ if not plugins_ready then
     { "Missing plugins:\n", "WarningMsg" },
     { "  " .. table.concat(missing_plugins, "\n  ") .. "\n\n" },
     { "Install them with:\n", "WarningMsg" },
-    { "  :Lazy sync\n\n" },
+    { '  :lua require("lazy").install({ lockfile = true })\n\n' },
     { "Then restart Neovim.\n" },
   }, true, {})
 end
