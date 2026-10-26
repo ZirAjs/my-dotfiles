@@ -29,6 +29,24 @@ map("n", "<leader>tt", "<cmd>terminal<cr>", { desc = "Terminal", silent = true }
 map("n", "<leader>tv", "<cmd>vsplit | terminal<cr>", { desc = "Vertical terminal", silent = true })
 map("t", "<Esc>", "<C-\\><C-n>", { desc = "Terminal normal mode", silent = true })
 
+-- Keep window-width resizing active so `<` and `>` can be repeated after Ctrl-w.
+local function resize_window_width(direction)
+  while direction == "<" or direction == ">" do
+    vim.cmd("wincmd " .. direction)
+    vim.cmd.redraw()
+    direction = vim.fn.getcharstr()
+  end
+
+  vim.api.nvim_feedkeys(direction, "m", false)
+end
+
+map("n", "<C-w><", function()
+  resize_window_width("<")
+end, { desc = "Decrease window width continuously", silent = true })
+map("n", "<C-w>>", function()
+  resize_window_width(">")
+end, { desc = "Increase window width continuously", silent = true })
+
 -- Move the current line or selected block up/down.
 map("n", "<M-Down>", "<cmd>move .+1<CR>==", { desc = "Move line down", silent = true })
 map("n", "<M-Up>", "<cmd>move .-2<CR>==", { desc = "Move line up", silent = true })
