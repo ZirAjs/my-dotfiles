@@ -49,3 +49,9 @@ if command -v neomutt >/dev/null 2>&1; then
     alias mutt="neomutt"
 fi
 # <<< NeoMutt configuration <<<
+
+# >>> Go configuration >>>
+if command -v go >/dev/null 2>&1; then
+    export PATH="$(go env GOPATH)/bin:$PATH"
+fi
+# <<< Go configuration <<<
