@@ -9,8 +9,9 @@ default as a reference.
 
 ## Link configs
 
-`install.sh` only links configuration files. Install applications, fonts, and
-plugins separately. It does not install packages or change your login shell.
+`install.sh` links configuration files and can install TPM from
+`https://github.com/tmux-plugins/tpm.git`. Install applications, fonts, and
+tmux plugins separately. It does not install packages or change your login shell.
 
 Preview the changes first:
 
@@ -19,6 +20,11 @@ Preview the changes first:
 Run interactively:
 
     ./install.sh
+
+After linking tmux, interactive setup asks `Install TPM as well? (y/n)` if
+the TPM directory is absent. Use `--tpm` or `--no-tpm` to choose explicitly.
+Noninteractive runs skip TPM unless `--tpm` is supplied. Dry runs never clone.
+After installation, press the tmux prefix followed by `I` to install plugins.
 
 Interactive setup asks whether to link GUI tool configurations
 (Alacritty, Kitty, and Zathura). A `DISPLAY` or `WAYLAND_DISPLAY` environment

@@ -8,16 +8,25 @@ default_action="prompt"
 action_flag_seen=false
 dry_run=false
 gui_mode="auto"
+tpm_mode="prompt"
 
 usage() {
-    echo "Usage: $0 [--dry-run] [--overwrite|--backup|--skip] [--gui|--no-gui]"
-    echo "Link configuration files only; install applications separately."
+    echo "Usage: $0 [--dry-run] [--overwrite|--backup|--skip] [--gui|--no-gui] [--tpm|--no-tpm]"
+    echo "Link configuration files and optionally install TPM; install applications separately."
     echo "  --gui / --no-gui  Include / skip Alacritty, Kitty, and Zathura configs."
+    echo "  --tpm / --no-tpm  Install / skip the tmux plugin manager."
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run)  dry_run=true ;;
+        --tpm|--no-tpm)
+            if [[ "$tpm_mode" != "prompt" ]]; then
+                echo "ERROR: choose only one of --tpm or --no-tpm" >&2
+                exit 2
+            fi
+            tpm_mode="${1#--}"
+            ;;
         --gui|--no-gui)
             if [[ "$gui_mode" != "auto" ]]; then
                 echo "ERROR: choose only one of --gui or --no-gui" >&2
@@ -447,4 +456,45 @@ fi
 if [[ -n "$backup_dir" ]]; then
     echo
     echo "Backups saved in: $backup_dir"
+fi
+
+# Install only into the repository configuration, after its link is in place.
+tpm_path="$repo_dir/tmux/plugins/tpm"
+if [[ -e "$tpm_path" || -L "$tpm_path" ]]; then
+    echo "TPM path already exists; skipping installation: $tpm_path"
+elif [[ "$dry_run" == true ]]; then
+    if [[ "$tpm_mode" == "tpm" ]]; then
+        echo "WOULD INSTALL TPM after linking tmux: $tpm_path"
+    elif [[ "$tpm_mode" == "prompt" ]]; then
+        echo "WOULD ASK: Install TPM as well? (y/n)"
+    fi
+elif [[ -L "$config_dir/tmux" ]] &&
+     [[ "$(readlink -f -- "$config_dir/tmux")" == "$(readlink -f -- "$repo_dir/tmux")" ]]; then
+    if [[ "$tpm_mode" == "prompt" ]]; then
+        tpm_mode="no-tpm"
+        if [[ -t 0 ]]; then
+            while true; do
+                printf 'Install TPM as well? (y/n) '
+                if ! read -r tpm_answer; then
+                    break
+                fi
+                case "$tpm_answer" in
+                    y|Y|yes|YES) tpm_mode="tpm"; break ;;
+                    n|N|no|NO|'') break ;;
+                    *) echo "Enter y or n." ;;
+                esac
+            done
+        fi
+    fi
+    if [[ "$tpm_mode" == "tpm" ]]; then
+        if ! command -v git >/dev/null 2>&1; then
+            echo "ERROR: Git is required to install TPM. Config links are already installed." >&2
+            exit 1
+        fi
+        mkdir -p -- "$repo_dir/tmux/plugins"
+        git clone https://github.com/tmux-plugins/tpm.git "$tpm_path"
+        echo "TPM installed. In tmux, press prefix then I to install plugins."
+    fi
+elif [[ "$tpm_mode" == "tpm" ]]; then
+    echo "TPM installation skipped: tmux is not linked to this repository."
 fi
