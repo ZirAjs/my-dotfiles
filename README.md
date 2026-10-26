@@ -40,6 +40,9 @@ prompting. Override detection explicitly:
 
 This installer links configurations; it does not install application binaries.
 Skipping GUI configurations leaves any existing GUI configs in place.
+When GUI configs are included, the installer creates an empty, Git-ignored
+`alacritty/themes/noctalia.toml` if absent. This keeps the fallback theme active
+without a missing-import warning; Noctalia can populate the file later.
 
 When a target already exists, the installer offers:
 

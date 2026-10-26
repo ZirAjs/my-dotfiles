@@ -1,7 +1,7 @@
 [general]
 import = [
     "themes/fallback.toml",
-    "themes/noctalia.toml",
+    "~/.config/alacritty/themes/noctalia.toml",
 ]
 
 [window]

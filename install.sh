@@ -289,6 +289,18 @@ fi
 
 backup_dir=""
 
+if [[ "$gui_mode" == "gui" && -d "$repo_dir/alacritty/themes" ]]; then
+    alacritty_local_theme="$repo_dir/alacritty/themes/noctalia.toml"
+    if [[ ! -e "$alacritty_local_theme" && ! -L "$alacritty_local_theme" ]]; then
+        if [[ "$dry_run" == true ]]; then
+            echo "WOULD CREATE: empty $alacritty_local_theme (use fallback theme)"
+        else
+            touch -- "$alacritty_local_theme"
+            echo "Created empty local Alacritty theme; fallback theme remains active."
+        fi
+    fi
+fi
+
 for package in "${packages[@]}"; do
     source_path="$repo_dir/$package"
     target_path="$config_dir/$package"
