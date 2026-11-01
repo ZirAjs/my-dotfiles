@@ -207,3 +207,8 @@ do
   fi
 done
 unset plugin_file zsh_plugins_dir
+
+# opencode
+if [[ -x "$HOME/.opencode/bin/opencode" ]]; then
+  export PATH="$HOME/.opencode/bin:$PATH"
+fi
