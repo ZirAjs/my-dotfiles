@@ -54,6 +54,7 @@ compat/nvim-0.11/lazy-lock.json       Neovim 0.11 locked plugin revisions
 The plugin set is intentionally compact:
 
 - `blink.cmp` for completion
+- `flash.nvim` for labeled jumps and Treesitter navigation
 - `fzf-lua` for file, grep, buffer, help, and symbol search
 - `which-key.nvim` for keymap hints
 - `marks.nvim` for visible marks and mark navigation
@@ -141,6 +142,16 @@ Macro recording with `q` is disabled in normal mode.
 | `<leader>fr` | Recent files |
 | `<leader>fs` | Document symbols |
 | `<leader>fS` | Workspace symbols |
+
+### Flash
+
+| Key | Mode | Action |
+| --- | --- | --- |
+| `s` | Normal, Visual, Operator-pending | Jump to a labeled match |
+| `S` | Normal, Visual, Operator-pending | Select a Treesitter node |
+| `r` | Operator-pending | Jump to a remote target |
+| `R` | Visual, Operator-pending | Search Treesitter nodes |
+| `<C-s>` | Command-line | Toggle Flash search |
 
 ### Git Hunks
 

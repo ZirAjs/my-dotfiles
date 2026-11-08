@@ -26,6 +26,7 @@ local missing_plugins = {}
 
 for _, plugin in ipairs({
   "blink.cmp",
+  "flash.nvim",
   "fzf-lua",
   "gitsigns.nvim",
   "lualine.nvim",

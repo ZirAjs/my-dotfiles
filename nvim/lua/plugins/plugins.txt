@@ -3,6 +3,7 @@
 # Keep one plugin per line. Short notes explain why the plugin exists.
 
 saghen/blink.cmp                 completion
+folke/flash.nvim                 labeled jumps and Treesitter navigation
 ibhagwan/fzf-lua                 fuzzy finder
 folke/which-key.nvim             keymap hints
 chentoast/marks.nvim             visible and navigable marks
