@@ -1,7 +1,7 @@
 # my-dotfiles
 
-Configuration for Alacritty, btop, Kitty, Neovim, tmux, Yazi, Zathura, and
-Zsh.
+Configuration for Alacritty, Bookokrat, btop, Kitty, Neovim, tmux, Yazi,
+Zathura, Zsh, and the terminal file chooser portal.
 
 Niri, systemd, and Noctalia configuration are intentionally not installed.
 `snippets/niri-user.kdl` preserves only the changes made to Niri's packaged
@@ -27,7 +27,7 @@ Noninteractive runs skip TPM unless `--tpm` is supplied. Dry runs never clone.
 After installation, press the tmux prefix followed by `I` to install plugins.
 
 Interactive setup asks whether to link GUI tool configurations
-(Alacritty, Kitty, and Zathura). A `DISPLAY` or `WAYLAND_DISPLAY` environment
+(Alacritty, Kitty, Zathura, and portals). A `DISPLAY` or `WAYLAND_DISPLAY` environment
 variable defaults the answer to yes; otherwise it defaults to no for server
 sessions. This detects the current session, so a desktop accessed through SSH
 may default to no. You can always choose either answer.
@@ -43,6 +43,19 @@ Skipping GUI configurations leaves any existing GUI configs in place.
 When GUI configs are included, the installer creates an empty, Git-ignored
 `alacritty/themes/noctalia.toml` if absent. This keeps the fallback theme active
 without a missing-import warning; Noctalia can populate the file later.
+
+### Terminal file chooser portal
+
+GUI setup links `xdg-desktop-portal/niri-portals.conf` and
+`xdg-desktop-portal-termfilechooser/config`. The Niri portal configuration
+preserves the packaged `gnome;gtk` defaults and selects `termfilechooser` for
+file dialogs, with `gtk` as a fallback when the backend is unavailable.
+The file chooser configuration starts Yazi in Kitty. Install
+`xdg-desktop-portal-termfilechooser`, `yazi`, and `kitty` separately; the
+linker only installs configuration. The installed backend must provide
+`termfilechooser.portal` and `yazi-wrapper.sh` in the portal data directories.
+After linking, restart the user `xdg-desktop-portal` service or log out and
+back in, then restart applications using file dialogs.
 
 When a target already exists, the installer offers:
 

@@ -50,6 +50,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 packages=(
+    bookokrat
     btop
     nvim
     tmux
@@ -70,7 +71,7 @@ if [[ "$gui_mode" == "auto" ]]; then
 
     if [[ -t 0 && "$dry_run" != true ]]; then
         while true; do
-            printf 'Link GUI configs (Alacritty, Kitty, Zathura)? [%s] ' "$gui_prompt"
+            printf 'Link GUI configs (Alacritty, Kitty, Zathura, portals)? [%s] ' "$gui_prompt"
             if ! read -r gui_answer; then
                 break
             fi
@@ -85,7 +86,7 @@ if [[ "$gui_mode" == "auto" ]]; then
 fi
 
 if [[ "$gui_mode" == "gui" ]]; then
-    packages+=(alacritty kitty zathura)
+    packages+=(alacritty kitty zathura xdg-desktop-portal xdg-desktop-portal-termfilechooser)
     echo "GUI configs: included"
 else
     echo "GUI configs: skipped"
