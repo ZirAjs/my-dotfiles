@@ -1,5 +1,11 @@
 -- Minimal Neovim config entrypoint.
 
+if vim.env.SSH_CONNECTION then
+  vim.g.clipboard = "osc52"
+end
+
+vim.opt.clipboard = "unnamedplus"
+
 local required_version = { major = 0, minor = 12 }
 local current_version = vim.version()
 local config_dir = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h")

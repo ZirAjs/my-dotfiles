@@ -58,8 +58,11 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- On Wayland, use wl-clipboard directly and make normal yanks use it.
-if vim.fn.executable("wl-copy") == 1 and vim.fn.executable("wl-paste") == 1 then
+-- Use the local Wayland clipboard when Neovim is not running over SSH.
+if not vim.env.SSH_CONNECTION
+  and vim.fn.executable("wl-copy") == 1
+  and vim.fn.executable("wl-paste") == 1
+then
   vim.g.clipboard = {
     name = "wl-clipboard",
     copy = {
@@ -72,6 +75,4 @@ if vim.fn.executable("wl-copy") == 1 and vim.fn.executable("wl-paste") == 1 then
     },
     cache_enabled = 0,
   }
-
-  vim.opt.clipboard = "unnamedplus"
 end

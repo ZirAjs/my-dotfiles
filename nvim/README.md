@@ -8,7 +8,7 @@ Personal Neovim configuration focused on a small, explicit Lua setup with lazy-l
 - Git, for bootstrapping `lazy.nvim`
 - A C compiler/toolchain for native plugins and Treesitter parsers
 - `tree-sitter-cli` 0.26.1 or newer, `tar`, and `curl` for the Neovim 0.12 Treesitter setup
-- Optional: `wl-copy` and `wl-paste` for Wayland clipboard integration
+- Optional: `wl-copy` and `wl-paste` for local Wayland clipboard integration
 - Optional: `rg` for fast live grep through `fzf-lua`
 
 ## Install
@@ -24,6 +24,9 @@ Start Neovim:
 ```sh
 nvim
 ```
+
+Over SSH, Neovim uses OSC 52 to reach the local terminal clipboard. Local
+Wayland sessions continue to use `wl-copy` and `wl-paste` when available.
 
 To install missing plugins at the commits recorded in the active lockfile:
 
